@@ -7,7 +7,7 @@ import (
 	"math/rand"
 	"testing"
 
-	"packages/container/deque"
+	"github.com/notnot/container/deque"
 )
 
 //// tests /////////////////////////////////////////////////////////////////////
