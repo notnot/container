@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	chunkSize   = 64
+	chunkSize   = 32
 	chunkCenter = chunkSize / 2
 )
 
