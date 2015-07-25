@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	chunkSize   = 32
+	chunkSize   = 32 // benchmark optimum on a 64-bit machine
 	chunkCenter = chunkSize / 2
 )
 
