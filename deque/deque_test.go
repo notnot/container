@@ -194,12 +194,75 @@ func TestIterate(t *testing.T) {
 
 //// benchmarks ////////////////////////////////////////////////////////////////
 
-func Benchmark_(b *testing.B) {
-
-	b.ResetTimer()
-
+func BenchmarkPushPopFront_10(b *testing.B) {
 	for i := 0; i < b.N; i++ {
+		deque := deque.New()
+		for i := 0; i < 10; i++ {
+			deque.PushFront(i)
+		}
+		for i := 0; i < 10; i++ {
+			_ = deque.PopFront()
+		}
+	}
+}
 
+func BenchmarkPushPopFront_100(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		deque := deque.New()
+		for i := 0; i < 100; i++ {
+			deque.PushFront(i)
+		}
+		for i := 0; i < 100; i++ {
+			_ = deque.PopFront()
+		}
+	}
+}
+
+func BenchmarkPushPopFront_1000(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		deque := deque.New()
+		for i := 0; i < 1000; i++ {
+			deque.PushFront(i)
+		}
+		for i := 0; i < 1000; i++ {
+			_ = deque.PopFront()
+		}
+	}
+}
+
+func BenchmarkPushPopBack_10(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		deque := deque.New()
+		for i := 0; i < 10; i++ {
+			deque.PushBack(i)
+		}
+		for i := 0; i < 10; i++ {
+			_ = deque.PopBack()
+		}
+	}
+}
+
+func BenchmarkPushPopBack_100(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		deque := deque.New()
+		for i := 0; i < 100; i++ {
+			deque.PushBack(i)
+		}
+		for i := 0; i < 100; i++ {
+			_ = deque.PopBack()
+		}
+	}
+}
+
+func BenchmarkPushPopBack_1000(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		deque := deque.New()
+		for i := 0; i < 1000; i++ {
+			deque.PushBack(i)
+		}
+		for i := 0; i < 1000; i++ {
+			_ = deque.PopBack()
+		}
 	}
 }
 
