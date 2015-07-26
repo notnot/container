@@ -130,7 +130,7 @@ func (d *Deque) BackItem() interface{} {
 	return d.chunks.Back().Value.(_Chunk)[d.backI]
 }
 
-// Front returns an iterator positioned at the front of the deque. or nil if
+// Front returns an iterator positioned at the front of the deque, or nil if
 // the deque is empty.
 func (d *Deque) Front() *Iterator {
 	if d.size == 0 {
@@ -146,7 +146,7 @@ func (d *Deque) Front() *Iterator {
 	}
 }
 
-// Back returns an iterator positioned at the back of the deque. or nil if the
+// Back returns an iterator positioned at the back of the deque, or nil if the
 // deque is empty.
 func (d *Deque) Back() *Iterator {
 	if d.size == 0 {
