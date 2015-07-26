@@ -287,6 +287,32 @@ func BenchmarkPushPopBack_1000(b *testing.B) {
 	}
 }
 
+func BenchmarkFrontItem(b *testing.B) {
+	const N = 16
+	deque := deque_int.New()
+	for i := 0; i < N; i++ {
+		deque.PushBack(i)
+	}
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_, _ = deque.FrontItem()
+	}
+}
+
+func BenchmarkBackItem(b *testing.B) {
+	const N = 16
+	deque := deque_int.New()
+	for i := 0; i < N; i++ {
+		deque.PushBack(i)
+	}
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_, _ = deque.BackItem()
+	}
+}
+
 func BenchmarkIterate_forward(b *testing.B) {
 	const N = 1024
 	deque := deque_int.New()

@@ -1,108 +1,108 @@
 // deque_test.go. jpad 2015
 
-package deque_test
+package deque_int_test
 
 import (
 	"fmt"
 	"math/rand"
 	"testing"
 
-	"github.com/notnot/container/deque"
+	"github.com/notnot/container/deque_int"
 )
 
 //// tests /////////////////////////////////////////////////////////////////////
 
 func TestEmpty_PopFront(t *testing.T) {
-	deque := deque.New()
+	deque := deque_int.New()
 
 	for i := 0; i < 3; i++ {
-		front := deque.PopFront()
-		if front != nil {
-			t.Errorf("got: %v, want: <nil>", front)
+		_, ok := deque.PopFront()
+		if ok {
+			t.Errorf("got: %v, want: false", ok)
 		}
 	}
 }
 
 func TestEmpty_PopBack(t *testing.T) {
-	deque := deque.New()
+	deque := deque_int.New()
 
 	for i := 0; i < 3; i++ {
-		back := deque.PopBack()
-		if back != nil {
-			t.Errorf("got: %v, want: <nil>", back)
+		_, ok := deque.PopBack()
+		if ok {
+			t.Errorf("got: %v, want: false", ok)
 		}
 	}
 }
 
 func TestEmpty_iterator(t *testing.T) {
-	deque := deque.New()
+	deque := deque_int.New()
 
 	front := deque.Front()
 	if front != nil {
-		t.Errorf("got: %v, want: <nil>", front.Value)
+		t.Errorf("got: %v, want: <nil>", front)
 	}
 
 	back := deque.Back()
 	if back != nil {
-		t.Errorf("got: %v, want: <nil>", back.Value)
+		t.Errorf("got: %v, want: <nil>", back)
 	}
 }
 
 func TestEmpty_item(t *testing.T) {
-	deque := deque.New()
+	deque := deque_int.New()
 
-	frontItem := deque.FrontItem()
-	if frontItem != nil {
+	frontItem, ok := deque.FrontItem()
+	if ok {
 		t.Errorf("got: %v, want: <nil>", frontItem)
 	}
 
-	backItem := deque.BackItem()
-	if backItem != nil {
+	backItem, ok := deque.BackItem()
+	if ok {
 		t.Errorf("got: %v, want: <nil>", backItem)
 	}
 }
 
 func TestPushPeek(t *testing.T) {
-	deque := deque.New()
+	deque := deque_int.New()
 
-	deque.PushFront("a")
-	if deque.FrontItem() != "a" {
-		t.Errorf("got: %v, want: a", deque.FrontItem())
+	deque.PushFront(0)
+	if item, _ := deque.FrontItem(); item != 0 {
+		t.Errorf("got: %d, want: 0", item)
 	}
 
-	deque.PushBack("z")
-	if deque.BackItem() != "z" {
-		t.Errorf("got: %v, want: z", deque.BackItem())
+	deque.PushBack(1)
+	if item, _ := deque.BackItem(); item != 1 {
+		t.Errorf("got: %d, want: 1", item)
 	}
 }
 
 func TestPushPop(t *testing.T) {
-	deque := deque.New()
+	deque := deque_int.New()
 
-	deque.PushFront("a")
-	deque.PushBack("z")
+	deque.PushFront(0)
+	deque.PushBack(1)
 
-	front := deque.PopFront()
-	if front != "a" {
-		t.Errorf("got: %v, want: a", front)
+	front, _ := deque.PopFront()
+	if front != 0 {
+		t.Errorf("got: %d, want: 0", front)
 	}
-	back := deque.PopBack()
-	if back != "z" {
-		t.Errorf("got: %v, want: z", back)
+	back, _ := deque.PopBack()
+	if back != 1 {
+		t.Errorf("got: %d, want: 1", back)
 	}
 }
 
 func TestPushPopRandom(t *testing.T) {
 	const N = 1000
-	deque := deque.New()
+	deque := deque_int.New()
 
 	// randomly push items to the front or to the back
 	for i := 0; i < N; i++ {
 		switch rand.Intn(2) {
 		case 0:
-			deque.PushFront("f")
+			deque.PushFront(0)
 		case 1:
-			deque.PushBack("b")
+			deque.PushBack(1)
 		}
 	}
 
@@ -110,11 +110,11 @@ func TestPushPopRandom(t *testing.T) {
 	for i := 0; i < N; i++ {
 		switch rand.Intn(2) {
 		case 0:
-			if deque.PopFront() == nil {
+			if _, ok := deque.PopFront(); !ok {
 				t.Errorf("deque empty!")
 			}
 		case 1:
-			if deque.PopBack() == nil {
+			if _, ok := deque.PopBack(); !ok {
 				t.Errorf("deque empty!")
 			}
 		}
@@ -123,7 +123,7 @@ func TestPushPopRandom(t *testing.T) {
 
 func TestSize(t *testing.T) {
 	const N = 10
-	deque := deque.New()
+	deque := deque_int.New()
 
 	if deque.Size() != 0 {
 		t.Errorf("got: %d, want: 0", deque.Size())
@@ -158,7 +158,7 @@ func TestSize(t *testing.T) {
 
 func TestClear(t *testing.T) {
 	const N = 10
-	deque := deque.New()
+	deque := deque_int.New()
 
 	for i := 0; i < N; i++ {
 		deque.PushFront(i)
@@ -171,7 +171,7 @@ func TestClear(t *testing.T) {
 
 func TestIterate(t *testing.T) {
 	const N = 1000
-	deque := deque.New()
+	deque := deque_int.New()
 	for i := 0; i < N; i++ {
 		deque.PushBack(i)
 	}
@@ -199,117 +199,97 @@ func TestIterate(t *testing.T) {
 
 func BenchmarkPushPopFront_10(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		deque := deque.New()
+		deque := deque_int.New()
 		for i := 0; i < 10; i++ {
 			deque.PushFront(i)
 		}
 
 		sum := 0
 		for i := 0; i < 10; i++ {
-			sum += deque.PopFront().(int)
+			v, _ := deque.PopFront()
+			sum += v
 		}
 	}
 }
 
 func BenchmarkPushPopFront_100(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		deque := deque.New()
+		deque := deque_int.New()
 		for i := 0; i < 100; i++ {
 			deque.PushFront(i)
 		}
 
 		sum := 0
 		for i := 0; i < 100; i++ {
-			sum += deque.PopFront().(int)
+			v, _ := deque.PopFront()
+			sum += v
 		}
 	}
 }
 
 func BenchmarkPushPopFront_1000(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		deque := deque.New()
+		deque := deque_int.New()
 		for i := 0; i < 1000; i++ {
 			deque.PushFront(i)
 		}
 
 		sum := 0
 		for i := 0; i < 1000; i++ {
-			sum += deque.PopFront().(int)
+			v, _ := deque.PopFront()
+			sum += v
 		}
 	}
 }
 
 func BenchmarkPushPopBack_10(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		deque := deque.New()
+		deque := deque_int.New()
 		for i := 0; i < 10; i++ {
 			deque.PushBack(i)
 		}
 
 		sum := 0
 		for i := 0; i < 10; i++ {
-			sum += deque.PopBack().(int)
+			v, _ := deque.PopBack()
+			sum += v
 		}
 	}
 }
 
 func BenchmarkPushPopBack_100(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		deque := deque.New()
+		deque := deque_int.New()
 		for i := 0; i < 100; i++ {
 			deque.PushBack(i)
 		}
 
 		sum := 0
 		for i := 0; i < 100; i++ {
-			sum += deque.PopBack().(int)
+			v, _ := deque.PopBack()
+			sum += v
 		}
 	}
 }
 
 func BenchmarkPushPopBack_1000(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		deque := deque.New()
+		deque := deque_int.New()
 		for i := 0; i < 1000; i++ {
 			deque.PushBack(i)
 		}
 
 		sum := 0
 		for i := 0; i < 1000; i++ {
-			sum += deque.PopBack().(int)
+			v, _ := deque.PopBack()
+			sum += v
 		}
-	}
-}
-
-func BenchmarkFrontItem(b *testing.B) {
-	const N = 16
-	deque := deque.New()
-	for i := 0; i < N; i++ {
-		deque.PushBack(i)
-	}
-	b.ResetTimer()
-
-	for i := 0; i < b.N; i++ {
-		_ = deque.FrontItem()
-	}
-}
-
-func BenchmarkBackItem(b *testing.B) {
-	const N = 16
-	deque := deque.New()
-	for i := 0; i < N; i++ {
-		deque.PushBack(i)
-	}
-	b.ResetTimer()
-
-	for i := 0; i < b.N; i++ {
-		_ = deque.BackItem()
 	}
 }
 
 func BenchmarkIterate_forward(b *testing.B) {
 	const N = 1024
-	deque := deque.New()
+	deque := deque_int.New()
 	for i := 0; i < N; i++ {
 		deque.PushBack(i)
 	}
@@ -324,7 +304,7 @@ func BenchmarkIterate_forward(b *testing.B) {
 
 func BenchmarkIterate_backward(b *testing.B) {
 	const N = 1024
-	deque := deque.New()
+	deque := deque_int.New()
 	for i := 0; i < N; i++ {
 		deque.PushBack(i)
 	}
@@ -341,7 +321,7 @@ func BenchmarkIterate_backward(b *testing.B) {
 
 func ExampleIterator() {
 	const N = 10
-	deque := deque.New()
+	deque := deque_int.New()
 	for i := 0; i < N; i++ {
 		deque.PushBack(i)
 	}

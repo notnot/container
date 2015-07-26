@@ -1,11 +1,11 @@
 // deque.go, jpad 2015
 
 /*
-Package deque implements an efficient general purpose double ended queue.
+Package deque_int implements an efficient double ended queue to store integers.
 An iterator is provided with which forward and backward iteration through the
 deque is possible.
 */
-package deque
+package deque_int
 
 import (
 	"container/list"
@@ -21,10 +21,8 @@ const (
 // Deque is a double ended queue that can handle items of any type.
 type Deque struct {
 	chunks list.List
-	fC     _Chunk // front chunk (shortcut)
-	bC     _Chunk // back chunk (shortcut)
-	fI     int    // front item index
-	bI     int    // back item index
+	frontI int // index of item at the front
+	backI  int // index of item at the back
 	size   int
 }
 
@@ -32,95 +30,110 @@ type Deque struct {
 func New() *Deque {
 	deque := Deque{}
 	deque.reset()
-	chunk := make(_Chunk, chunkSize)
-	deque.fC = chunk
-	deque.bC = chunk
-	deque.chunks.PushBack(chunk)
+	deque.chunks.PushBack(make(_Chunk, chunkSize))
 	return &deque
 }
 
 // PushFront adds an item to the front of the deque.
-func (d *Deque) PushFront(item interface{}) {
-	if d.fI == 0 { // 'front' chunk full?
+func (d *Deque) PushFront(item int) {
+	// get 'front' chunk
+	var chunk _Chunk
+	if d.frontI == 0 { // 'front' chunk full?
 		// add a new chunk at the front
-		d.fC = make(_Chunk, chunkSize)
-		d.chunks.PushFront(d.fC)
-		d.fI = chunkSize
+		chunk = make(_Chunk, chunkSize)
+		d.chunks.PushFront(chunk)
+		d.frontI = chunkSize
+	} else {
+		chunk = d.chunks.Front().Value.(_Chunk)
 	}
-	d.fI--
-	d.fC[d.fI] = item
+
+	d.frontI--
+	chunk[d.frontI] = item
 	d.size++
 }
 
 // PushBack adds an item to the back of the deque.
-func (d *Deque) PushBack(item interface{}) {
-	if d.bI == chunkSize-1 { // 'back' chunk full?
+func (d *Deque) PushBack(item int) {
+	// get 'back' chunk
+	var chunk _Chunk
+	if d.backI == chunkSize-1 { // 'back' chunk full?
 		// add a new chunk at the back
-		d.bC = make(_Chunk, chunkSize)
-		d.chunks.PushBack(d.bC)
-		d.bI = -1
+		chunk = make(_Chunk, chunkSize)
+		d.chunks.PushBack(chunk)
+		d.backI = -1
+	} else {
+		chunk = d.chunks.Back().Value.(_Chunk)
 	}
-	d.bI++
-	d.bC[d.bI] = item
+
+	d.backI++
+	chunk[d.backI] = item
 	d.size++
 }
 
 // PopFront removes and returns the item from the front of the deque.
-// Returns nil when the deque is empty.
-func (d *Deque) PopFront() interface{} {
-	if d.size < 0 {
-		return nil
+// Returns false when the deque is empty.
+func (d *Deque) PopFront() (int, bool) {
+	if d.size <= 0 {
+		return 0, false
 	}
-	item := d.fC[d.fI]
-	d.fC[d.fI] = nil // clear ? necessary
-	d.fI++
+	node := d.chunks.Front()
+	chunk := node.Value.(_Chunk)
+	item := chunk[d.frontI]
+	d.frontI++
 	d.size--
 
-	if d.fI == chunkSize { // 'front' chunk empty?
+	if d.frontI == chunkSize { // 'front' chunk empty?
 		if d.size == 0 { // deque is empty, reset it
 			d.reset()
 		} else {
-			d.chunks.Remove(d.chunks.Front())
-			d.fI = 0
-			d.fC = d.chunks.Front().Value.(_Chunk)
+			d.chunks.Remove(node)
+			d.frontI = 0
 		}
 	}
 
-	return item
+	return item, true
 }
 
 // PopBack removes and returns the item from the back of the deque.
-// Returns nil when the deque is empty.
-func (d *Deque) PopBack() interface{} {
-	if d.size < 0 {
-		return nil
+// Returns false when the deque is empty.
+func (d *Deque) PopBack() (int, bool) {
+	if d.size <= 0 {
+		return 0, false
 	}
-	item := d.bC[d.bI]
-	d.bC[d.bI] = nil // clear ? necessary
-	d.bI--
+	node := d.chunks.Back()
+	chunk := node.Value.(_Chunk)
+	item := chunk[d.backI]
+	d.backI--
 	d.size--
 
-	if d.bI == -1 { // 'back' chunk empty?
+	if d.backI == -1 { // 'back' chunk empty?
 		if d.size == 0 { // deque is empty, reset it
 			d.reset()
 		} else {
-			d.chunks.Remove(d.chunks.Back())
-			d.bI = chunkSize - 1
-			d.bC = d.chunks.Back().Value.(_Chunk)
+			d.chunks.Remove(node)
+			d.backI = chunkSize - 1
 		}
 	}
 
-	return item
+	return item, true
 }
 
 // FrontItem returns the item at the front of the deque.
-func (d *Deque) FrontItem() interface{} {
-	return d.fC[d.fI]
+func (d *Deque) FrontItem() (int, bool) {
+	if d.size <= 0 {
+		return 0, false
+	} else {
+		return d.chunks.Front().Value.(_Chunk)[d.frontI], true
+	}
 }
 
 // BackItem returns the item at the back of the deque.
-func (d *Deque) BackItem() interface{} {
-	return d.bC[d.bI]
+func (d *Deque) BackItem() (int, bool) {
+	if d.size <= 0 {
+		return 0, false
+	} else {
+		return d.chunks.Back().Value.(_Chunk)[d.backI], true
+	}
 }
 
 // Front returns an iterator positioned at the front of the deque, or nil if
@@ -129,30 +142,28 @@ func (d *Deque) Front() *Iterator {
 	if d.size == 0 {
 		return nil
 	}
-	fNode := d.chunks.Front()
+	front := d.chunks.Front()
 	return &Iterator{
-		Value: d.fC[d.fI],
+		Value: front.Value.(_Chunk)[d.frontI],
 		deque: d,
-		node:  fNode,
-		chunk: fNode.Value.(_Chunk),
-		i:     d.fI,
+		node:  front,
+		i:     d.frontI,
 		pos:   0,
 	}
 }
 
-// Back returns an iterator positioned at the back of the deque, or nil if
-// the deque is empty.
+// Back returns an iterator positioned at the back of the deque, or nil if the
+// deque is empty.
 func (d *Deque) Back() *Iterator {
 	if d.size == 0 {
 		return nil
 	}
-	bNode := d.chunks.Back()
+	back := d.chunks.Back()
 	return &Iterator{
-		Value: d.bC[d.bI],
+		Value: back.Value.(_Chunk)[d.backI],
 		deque: d,
-		node:  bNode,
-		chunk: bNode.Value.(_Chunk),
-		i:     d.bI,
+		node:  back,
+		i:     d.backI,
 		pos:   d.size - 1,
 	}
 }
@@ -168,19 +179,18 @@ func (d *Deque) Clear() {
 }
 
 func (d *Deque) reset() {
-	d.fI = chunkCenter + 1
-	d.bI = chunkCenter
+	d.frontI = chunkCenter + 1
+	d.backI = chunkCenter
 }
 
 //// Iterator //////////////////////////////////////////////////////////////////
 
 // Iterator points to a deque item and can be used to iterate through the deque.
 type Iterator struct {
-	Value interface{}
+	Value int
 
 	deque *Deque
-	node  *list.Element // current chunk node
-	chunk _Chunk        // current chunk (shortcut)
+	node  *list.Element // current chunk
 	i     int           // current item index
 	pos   int           // iteration position
 }
@@ -195,10 +205,9 @@ func (it *Iterator) Next() *Iterator {
 	it.i++
 	if it.i >= chunkSize { // next chunk?
 		it.node = it.node.Next()
-		it.chunk = it.node.Value.(_Chunk)
 		it.i = 0
 	}
-	it.Value = it.chunk[it.i]
+	it.Value = it.node.Value.(_Chunk)[it.i]
 	return it
 }
 
@@ -212,13 +221,12 @@ func (it *Iterator) Prev() *Iterator {
 	it.i--
 	if it.i < 0 { // previous chunk?
 		it.node = it.node.Prev()
-		it.chunk = it.node.Value.(_Chunk)
 		it.i = chunkSize - 1
 	}
-	it.Value = it.chunk[it.i]
+	it.Value = it.node.Value.(_Chunk)[it.i]
 	return it
 }
 
 //// _Chunk ////////////////////////////////////////////////////////////////////
 
-type _Chunk []interface{}
+type _Chunk []int

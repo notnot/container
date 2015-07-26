@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	chunkSize   = 32 // benchmark optimum on a 64-bit machine
+	chunkSize   = 32 // benchmarked optimum on a 64-bit machine
 	chunkCenter = chunkSize / 2
 )
 
@@ -21,8 +21,10 @@ const (
 // Deque is a double ended queue that can handle items of any type.
 type Deque struct {
 	chunks list.List
-	frontI int // index of item at the front
-	backI  int // index of item at the back
+	fC     _Chunk // front chunk (shortcut)
+	bC     _Chunk // back chunk (shortcut)
+	fI     int    // front item index
+	bI     int    // back item index
 	size   int
 }
 
@@ -30,43 +32,36 @@ type Deque struct {
 func New() *Deque {
 	deque := Deque{}
 	deque.reset()
-	deque.chunks.PushBack(make(_Chunk, chunkSize))
+	chunk := make(_Chunk, chunkSize)
+	deque.fC = chunk
+	deque.bC = chunk
+	deque.chunks.PushBack(chunk)
 	return &deque
 }
 
 // PushFront adds an item to the front of the deque.
 func (d *Deque) PushFront(item int) {
-	// get 'front' chunk
-	var chunk _Chunk
-	if d.frontI == 0 { // 'front' chunk full?
+	if d.fI == 0 { // 'front' chunk full?
 		// add a new chunk at the front
-		chunk = make(_Chunk, chunkSize)
-		d.chunks.PushFront(chunk)
-		d.frontI = chunkSize
-	} else {
-		chunk = d.chunks.Front().Value.(_Chunk)
+		d.fC = make(_Chunk, chunkSize)
+		d.chunks.PushFront(d.fC)
+		d.fI = chunkSize
 	}
-
-	d.frontI--
-	chunk[d.frontI] = item
+	d.fI--
+	d.fC[d.fI] = item
 	d.size++
 }
 
 // PushBack adds an item to the back of the deque.
 func (d *Deque) PushBack(item int) {
-	// get 'back' chunk
-	var chunk _Chunk
-	if d.backI == chunkSize-1 { // 'back' chunk full?
+	if d.bI == chunkSize-1 { // 'back' chunk full?
 		// add a new chunk at the back
-		chunk = make(_Chunk, chunkSize)
-		d.chunks.PushBack(chunk)
-		d.backI = -1
-	} else {
-		chunk = d.chunks.Back().Value.(_Chunk)
+		d.bC = make(_Chunk, chunkSize)
+		d.chunks.PushBack(d.bC)
+		d.bI = -1
 	}
-
-	d.backI++
-	chunk[d.backI] = item
+	d.bI++
+	d.bC[d.bI] = item
 	d.size++
 }
 
@@ -76,18 +71,17 @@ func (d *Deque) PopFront() (int, bool) {
 	if d.size <= 0 {
 		return 0, false
 	}
-	node := d.chunks.Front()
-	chunk := node.Value.(_Chunk)
-	item := chunk[d.frontI]
-	d.frontI++
+	item := d.fC[d.fI]
+	d.fI++
 	d.size--
 
-	if d.frontI == chunkSize { // 'front' chunk empty?
+	if d.fI == chunkSize { // 'front' chunk empty?
 		if d.size == 0 { // deque is empty, reset it
 			d.reset()
 		} else {
-			d.chunks.Remove(node)
-			d.frontI = 0
+			d.chunks.Remove(d.chunks.Front())
+			d.fI = 0
+			d.fC = d.chunks.Front().Value.(_Chunk)
 		}
 	}
 
@@ -100,18 +94,17 @@ func (d *Deque) PopBack() (int, bool) {
 	if d.size <= 0 {
 		return 0, false
 	}
-	node := d.chunks.Back()
-	chunk := node.Value.(_Chunk)
-	item := chunk[d.backI]
-	d.backI--
+	item := d.bC[d.bI]
+	d.bI--
 	d.size--
 
-	if d.backI == -1 { // 'back' chunk empty?
+	if d.bI == -1 { // 'back' chunk empty?
 		if d.size == 0 { // deque is empty, reset it
 			d.reset()
 		} else {
-			d.chunks.Remove(node)
-			d.backI = chunkSize - 1
+			d.chunks.Remove(d.chunks.Back())
+			d.bI = chunkSize - 1
+			d.bC = d.chunks.Back().Value.(_Chunk)
 		}
 	}
 
@@ -123,7 +116,7 @@ func (d *Deque) FrontItem() (int, bool) {
 	if d.size <= 0 {
 		return 0, false
 	} else {
-		return d.chunks.Front().Value.(_Chunk)[d.frontI], true
+		return d.fC[d.fI], true
 	}
 }
 
@@ -132,7 +125,7 @@ func (d *Deque) BackItem() (int, bool) {
 	if d.size <= 0 {
 		return 0, false
 	} else {
-		return d.chunks.Back().Value.(_Chunk)[d.backI], true
+		return d.bC[d.bI], true
 	}
 }
 
@@ -142,28 +135,30 @@ func (d *Deque) Front() *Iterator {
 	if d.size == 0 {
 		return nil
 	}
-	front := d.chunks.Front()
+	fNode := d.chunks.Front()
 	return &Iterator{
-		Value: front.Value.(_Chunk)[d.frontI],
+		Value: d.fC[d.fI],
 		deque: d,
-		node:  front,
-		i:     d.frontI,
+		node:  fNode,
+		chunk: fNode.Value.(_Chunk),
+		i:     d.fI,
 		pos:   0,
 	}
 }
 
-// Back returns an iterator positioned at the back of the deque, or nil if the
-// deque is empty.
+// Back returns an iterator positioned at the back of the deque, or nil if
+// the deque is empty.
 func (d *Deque) Back() *Iterator {
 	if d.size == 0 {
 		return nil
 	}
-	back := d.chunks.Back()
+	bNode := d.chunks.Back()
 	return &Iterator{
-		Value: back.Value.(_Chunk)[d.backI],
+		Value: d.bC[d.bI],
 		deque: d,
-		node:  back,
-		i:     d.backI,
+		node:  bNode,
+		chunk: bNode.Value.(_Chunk),
+		i:     d.bI,
 		pos:   d.size - 1,
 	}
 }
@@ -179,8 +174,8 @@ func (d *Deque) Clear() {
 }
 
 func (d *Deque) reset() {
-	d.frontI = chunkCenter + 1
-	d.backI = chunkCenter
+	d.fI = chunkCenter + 1
+	d.bI = chunkCenter
 }
 
 //// Iterator //////////////////////////////////////////////////////////////////
@@ -190,7 +185,8 @@ type Iterator struct {
 	Value int
 
 	deque *Deque
-	node  *list.Element // current chunk
+	node  *list.Element // current chunk node
+	chunk _Chunk        // current chunk (shortcut)
 	i     int           // current item index
 	pos   int           // iteration position
 }
@@ -205,9 +201,10 @@ func (it *Iterator) Next() *Iterator {
 	it.i++
 	if it.i >= chunkSize { // next chunk?
 		it.node = it.node.Next()
+		it.chunk = it.node.Value.(_Chunk)
 		it.i = 0
 	}
-	it.Value = it.node.Value.(_Chunk)[it.i]
+	it.Value = it.chunk[it.i]
 	return it
 }
 
@@ -221,9 +218,10 @@ func (it *Iterator) Prev() *Iterator {
 	it.i--
 	if it.i < 0 { // previous chunk?
 		it.node = it.node.Prev()
+		it.chunk = it.node.Value.(_Chunk)
 		it.i = chunkSize - 1
 	}
-	it.Value = it.node.Value.(_Chunk)[it.i]
+	it.Value = it.chunk[it.i]
 	return it
 }
 
