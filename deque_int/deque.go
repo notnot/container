@@ -66,10 +66,10 @@ func (d *Deque) PushBack(item int) {
 }
 
 // PopFront removes and returns the item from the front of the deque.
-// Returns false when the deque is empty.
-func (d *Deque) PopFront() (int, bool) {
+// Returns the zero value when the deque is empty.
+func (d *Deque) PopFront() int {
 	if d.size <= 0 {
-		return 0, false
+		return 0
 	}
 	item := d.fC[d.fI]
 	d.fI++
@@ -85,14 +85,14 @@ func (d *Deque) PopFront() (int, bool) {
 		}
 	}
 
-	return item, true
+	return item
 }
 
 // PopBack removes and returns the item from the back of the deque.
-// Returns false when the deque is empty.
-func (d *Deque) PopBack() (int, bool) {
+// Returns the zero value when the deque is empty.
+func (d *Deque) PopBack() int {
 	if d.size <= 0 {
-		return 0, false
+		return 0
 	}
 	item := d.bC[d.bI]
 	d.bI--
@@ -108,24 +108,26 @@ func (d *Deque) PopBack() (int, bool) {
 		}
 	}
 
-	return item, true
+	return item
 }
 
 // FrontItem returns the item at the front of the deque.
-func (d *Deque) FrontItem() (int, bool) {
+// Returns the zero value when the deque is empty.
+func (d *Deque) FrontItem() int {
 	if d.size <= 0 {
-		return 0, false
+		return 0
 	} else {
-		return d.fC[d.fI], true
+		return d.fC[d.fI]
 	}
 }
 
 // BackItem returns the item at the back of the deque.
-func (d *Deque) BackItem() (int, bool) {
+// Returns the zero value when the deque is empty.
+func (d *Deque) BackItem() int {
 	if d.size <= 0 {
-		return 0, false
+		return 0
 	} else {
-		return d.bC[d.bI], true
+		return d.bC[d.bI]
 	}
 }
 
